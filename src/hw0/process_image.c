@@ -23,10 +23,10 @@ float get_pixel(image im, int x, int y, int c)
     }
     // channel clamping really shouldn't ever happen
     if (c < 0) {
-        printf("get_pixel clamping from negative on c=%d", c);
+        fprintf(stderr, "get_pixel clamping from negative on c=%d", c);
         c = 0;
     } else if (c >= im.c) {
-        printf("get_pixel clamping from positive on c=%d", c);
+        fprintf(stderr, "get_pixel clamping from positive on c=%d", c);
         c = im.c - 1;
     }
     return im.data[(im.w*im.h*c)+(im.w*y)+(x)];
@@ -44,6 +44,8 @@ void set_pixel(image im, int x, int y, int c, float v)
         return;
     }
     if ((c < 0) || (c >= im.c)) {
+        // this is a weird thing to be out of bounds on
+        fprintf(stderr, "set_pixel out of bounds on c=%d", c);
         return;
     }
     im.data[(im.w*im.h*c)+(im.w*y)+(x)] = v;
@@ -79,7 +81,7 @@ image rgb_to_grayscale(image im)
 
 void shift_image(image im, int c, float v)
 {
-    // 0.3 TODO Fill this in
+    // 0.3 TODONE Fill this in
     for (int y = 0; y < im.h; y++) {
         for (int x = 0; x < im.w; x++) {
             float newvalue = get_pixel(im, x, y, c) + v;
@@ -90,7 +92,7 @@ void shift_image(image im, int c, float v)
 
 void clamp_image(image im)
 {
-    // 0.4 TODO Fill this in
+    // 0.4 TODONE Fill this in
     for (int c = 0; c < im.c; c++) {
         for (int y = 0; y < im.h; y++) {
             for (int x = 0; x < im.w; x++) {
