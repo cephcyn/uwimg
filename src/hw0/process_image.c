@@ -1,3 +1,5 @@
+// Collaborators: Joyce Zhou, Travis McGaha
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -6,13 +8,46 @@
 
 float get_pixel(image im, int x, int y, int c)
 {
-    // TODO Fill this in
-    return 0;
+    // 0.0 TODONE Fill this in
+    // x=column(width), y=row(height), c=channel
+    // Use clamp padding: move target to closest coord within image bounds
+    if (x < 0) {
+        x = 0;
+    } else if (x >= im.w) {
+        x = im.w - 1;
+    }
+    if (y < 0) {
+        y = 0;
+    } else if (y >= im.h) {
+        y = im.h - 1;
+    }
+    // channel clamping really shouldn't ever happen
+    if (c < 0) {
+        printf("get_pixel clamping from negative on c=%d", c);
+        c = 0;
+    } else if (c >= im.c) {
+        printf("get_pixel clamping from positive on c=%d", c);
+        c = im.c - 1;
+    }
+    return im.data[(im.w*im.h*c)+(im.w*y)+(x)];
 }
 
 void set_pixel(image im, int x, int y, int c, float v)
 {
-    // TODO Fill this in
+    // 0.0 TODONE Fill this in
+    // x=column(width), y=row(height), c=channel
+    // If outside bounds, do nothing
+    if ((x < 0) || (x >= im.w)) {
+        return;
+    }
+    if ((y < 0) || (y >= im.h)) {
+        return;
+    }
+    if ((c < 0) || (c >= im.c)) {
+        return;
+    }
+    im.data[(im.w*im.h*c)+(im.w*y)+(x)] = v;
+    return;
 }
 
 image copy_image(image im)
