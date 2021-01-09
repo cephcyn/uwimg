@@ -54,7 +54,7 @@ image copy_image(image im)
 {
     image copy = make_image(im.w, im.h, im.c);
     // 0.1 TODONE Fill this in
-    memcpy(copy.data, im.data, im.w*im.h*im.c);
+    memcpy(copy.data, im.data, im.w*im.h*im.c*sizeof(float));
     return copy;
 }
 
@@ -64,9 +64,10 @@ image rgb_to_grayscale(image im)
     image gray = make_image(im.w, im.h, 1);
     // 0.2 TODONE Fill this in
     // channels are (0,1,2)=(R,G,B)
-    for (int x = 0; x < im.w; x++) {
-        for (int y = 0; y < im.h; y++) {
+    for (int y = 0; y < im.h; y++) {
+        for (int x = 0; x < im.w; x++) {
             float weighted = 0;
+            // we want these weights because perception != direct rgb scale
             weighted += 0.299 * get_pixel(im, x, y, 0);
             weighted += 0.587 * get_pixel(im, x, y, 1);
             weighted += 0.114 * get_pixel(im, x, y, 2);
@@ -78,12 +79,31 @@ image rgb_to_grayscale(image im)
 
 void shift_image(image im, int c, float v)
 {
-    // TODO Fill this in
+    // 0.3 TODO Fill this in
+    for (int y = 0; y < im.h; y++) {
+        for (int x = 0; x < im.w; x++) {
+            float newvalue = get_pixel(im, x, y, c) + v;
+            set_pixel(im, x, y, c, newvalue);
+        }
+    }
 }
 
 void clamp_image(image im)
 {
-    // TODO Fill this in
+    // 0.4 TODO Fill this in
+    for (int c = 0; c < im.c; c++) {
+        for (int y = 0; y < im.h; y++) {
+            for (int x = 0; x < im.w; x++) {
+                float value = get_pixel(im, x, y, c);
+                if (value < 0) {
+                    value = 0;
+                } else if (value > 1) {
+                    value = 1;
+                }
+                set_pixel(im, x, y, c, value);
+            }
+        }
+    }
 }
 
 
