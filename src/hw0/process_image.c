@@ -53,7 +53,7 @@ void set_pixel(image im, int x, int y, int c, float v)
 image copy_image(image im)
 {
     image copy = make_image(im.w, im.h, im.c);
-    // 0.1 TODO Fill this in
+    // 0.1 TODONE Fill this in
     memcpy(copy.data, im.data, im.w*im.h*im.c);
     return copy;
 }
@@ -62,7 +62,17 @@ image rgb_to_grayscale(image im)
 {
     assert(im.c == 3);
     image gray = make_image(im.w, im.h, 1);
-    // TODO Fill this in
+    // 0.2 TODONE Fill this in
+    // channels are (0,1,2)=(R,G,B)
+    for (int x = 0; x < im.w; x++) {
+        for (int y = 0; y < im.h; y++) {
+            float weighted = 0;
+            weighted += 0.299 * get_pixel(im, x, y, 0);
+            weighted += 0.587 * get_pixel(im, x, y, 1);
+            weighted += 0.114 * get_pixel(im, x, y, 2);
+            set_pixel(gray, x, y, 0, weighted);
+        }
+    }
     return gray;
 }
 
