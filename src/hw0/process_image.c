@@ -122,7 +122,47 @@ float three_way_min(float a, float b, float c)
 
 void rgb_to_hsv(image im)
 {
-    // TODO Fill this in
+    // 0.5 TODONE Fill this in
+    // channels are (0,1,2)=(R,G,B)
+    for (int y = 0; y < im.h; y++) {
+        for (int x = 0; x < im.w; x++) {
+            // get the rgb values to start with
+            float r = get_pixel(im, x, y, 0);
+            float g = get_pixel(im, x, y, 1);
+            float b = get_pixel(im, x, y, 2);
+            // calculate Value
+            float v = three_way_max(r, g, b);
+            // calculate Saturation
+            float m = three_way_min(r, g, b);
+            float c = v - m;
+            float s;
+            if (r==0 && g==0 && b==0) {
+                s = 0;
+            } else {
+                s = c / v;
+            }
+            // calculate Hue
+            float h;
+            if (c==0) {
+                h = 0;
+            } else if (v==r) {
+                h = (g - b) / c;
+            } else if (v==g) {
+                h = (b - r) / c + 2;
+            } else { // if v==b
+                h = (r - g) / c + 4;
+            }
+            if (h<0) {
+                h = h / 6 + 1;
+            } else {
+                h = h / 6;
+            }
+            // Apply the values
+            set_pixel(im, x, y, 0, h);
+            set_pixel(im, x, y, 1, s);
+            set_pixel(im, x, y, 2, v);
+        }
+    }
 }
 
 void hsv_to_rgb(image im)
