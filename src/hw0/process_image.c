@@ -142,20 +142,21 @@ void rgb_to_hsv(image im)
                 s = c / v;
             }
             // calculate Hue
-            float h;
+            float hp;
             if (c==0) {
-                h = 0;
+                hp = 0;
             } else if (v==r) {
-                h = (g - b) / c;
+                hp = (g - b) / c;
             } else if (v==g) {
-                h = (b - r) / c + 2;
+                hp = (b - r) / c + 2;
             } else { // if v==b
-                h = (r - g) / c + 4;
+                hp = (r - g) / c + 4;
             }
-            if (h<0) {
-                h = h / 6 + 1;
+            float h;
+            if (hp<0) {
+                h = hp / 6 + 1;
             } else {
-                h = h / 6;
+                h = hp / 6;
             }
             // Apply the values
             set_pixel(im, x, y, 0, h);
@@ -165,7 +166,37 @@ void rgb_to_hsv(image im)
     }
 }
 
+
+// Custom function for hsv_to_rgb
+// Assumes H in [0, 360) space
+// Assumes S in [0, 1) space
+// Assumes V in [0, 1) space
+float hsv_rgb_transform_func(int n, float h, float s, float v) {
+    float k = fmodf(n + (h / 60), 6);
+    return v - v * s * fmaxf(0, three_way_min(k, 4 - k, 1));
+}
+
 void hsv_to_rgb(image im)
 {
-    // TODO Fill this in
+    // 0.6 TODONE Fill this in
+    // Reference for this algorithm: 
+    // https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB_alternative
+    // channels are (0,1,2)=(H,S,V)
+    for (int y = 0; y < im.h; y++) {
+        for (int x = 0; x < im.w; x++) {
+            // get the hsv values to start with
+            float h = get_pixel(im, x, y, 0);
+            h = h * 360; // work with a hue in [0, 360) space
+            float s = get_pixel(im, x, y, 1);
+            float v = get_pixel(im, x, y, 2);
+            // calculate the rgb values
+            float r = hsv_rgb_transform_func(5, h, s, v);
+            float g = hsv_rgb_transform_func(3, h, s, v);
+            float b = hsv_rgb_transform_func(1, h, s, v);
+            // Apply the values
+            set_pixel(im, x, y, 0, r);
+            set_pixel(im, x, y, 1, g);
+            set_pixel(im, x, y, 2, b);
+        }
+    }
 }
