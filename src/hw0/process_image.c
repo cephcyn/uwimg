@@ -191,6 +191,10 @@ void hsv_to_rgb(image im) {
     }
 }
 
+/*
+ * 0.7 scale_image
+ *
+ */
 void scale_image(image im, int c, float v) {
     for (int y = 0; y < im.h; y++) {
         for (int x = 0; x < im.w; x++) {
@@ -210,7 +214,7 @@ void scale_image(image im, int c, float v) {
  * reference: https://observablehq.com/@mbostock/luv-and-hcl
  
    https://cscheid.net/2012/02/16/hcl-color-space-blues.html
-*/
+ */
 
 // https://observablehq.com/@mbostock/lab-and-rgb
 // TODO: this may be wrong http://www.brucelindbloom.com/index.html?Eqn_RGB_to_XYZ.html

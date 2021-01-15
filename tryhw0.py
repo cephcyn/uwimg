@@ -31,10 +31,16 @@ clamp_image(im)
 hsv_to_rgb(im)
 save_image(im, "dog_saturated")
 
-# 0.7
+# 0.7 Scale Image
 im = load_image("data/dog.jpg")
 rgb_to_hsv(im)
 scale_image(im, 1, 2)
 clamp_image(im)
 hsv_to_rgb(im)
 save_image(im, "dog_scale_saturated")
+
+# 0.8 RGB to HCL
+im = load_image("data/dog.jpg")
+rgb_to_hcl(im) 
+# it's a confetti dog if i look at it in an image viewer!
+save_image(im, "dog_hcl")
