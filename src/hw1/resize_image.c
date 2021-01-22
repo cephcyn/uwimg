@@ -3,25 +3,27 @@
 
 float nn_interpolate(image im, float x, float y, int c)
 {
-    // TODO Fill in
-    return 0;
+    // 1.1 TODONE Fill in
+    int nx = (int) roundf(x);
+    int ny = (int) roundf(y);
+    return get_pixel(im, nx, ny, c);
 }
 
 image nn_resize(image im, int w, int h)
 {
-    // TODO Fill in (also fix that first line)
+    // 1.2 TODO Fill in (also fix that first line)
     return make_image(1,1,1);
 }
 
 float bilinear_interpolate(image im, float x, float y, int c)
 {
-    // TODO
+    // 1.3 TODO
     return 0;
 }
 
 image bilinear_resize(image im, int w, int h)
 {
-    // TODO
+    // 1.4 TODO
     return make_image(1,1,1);
 }
 
