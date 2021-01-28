@@ -206,29 +206,126 @@ image sub_image(image a, image b)
 
 image make_gx_filter()
 {
-    // TODO
-    return make_image(1,1,1);
+    // 2.5.1 TODO
+    image filter = make_image(3,3,1);
+    set_pixel(filter, 0, 0, 0, -1);
+    set_pixel(filter, 1, 0, 0, 0);
+    set_pixel(filter, 2, 0, 0, 1);
+    set_pixel(filter, 0, 1, 0, -2);
+    set_pixel(filter, 1, 1, 0, 0);
+    set_pixel(filter, 2, 1, 0, 2);
+    set_pixel(filter, 0, 2, 0, -1);
+    set_pixel(filter, 1, 2, 0, 0);
+    set_pixel(filter, 2, 2, 0, 1);
+    return filter;
 }
 
 image make_gy_filter()
 {
-    // TODO
-    return make_image(1,1,1);
+    // 2.5.1 TODO
+    image filter = make_image(3,3,1);
+    set_pixel(filter, 0, 0, 0, -1);
+    set_pixel(filter, 1, 0, 0, -2);
+    set_pixel(filter, 2, 0, 0, -1);
+    set_pixel(filter, 0, 1, 0, 0);
+    set_pixel(filter, 1, 1, 0, 0);
+    set_pixel(filter, 2, 1, 0, 0);
+    set_pixel(filter, 0, 2, 0, 1);
+    set_pixel(filter, 1, 2, 0, 2);
+    set_pixel(filter, 2, 2, 0, 1);
+    return filter;
 }
 
 void feature_normalize(image im)
 {
-    // TODO
+    // 2.5.2 TODO
+    // get the minimum and maximum values for the entire image
+    float min = get_pixel(im, 0, 0, 0);
+    float max = get_pixel(im, 0, 0, 0);
+    for (int x = 0; x < im.w; x++) {
+        for (int y = 0; y < im.h; y++) {
+            for (int c = 0; c < im.c; c++) {
+                float value = get_pixel(im, x, y, c);
+                if (value < min) {
+                    min = value;
+                }
+                if (value > max) {
+                    max = value;
+                }
+            }
+        }
+    }
+    // calculate the range
+    float range = max - min;
+    // set all the new values
+    for (int x = 0; x < im.w; x++) {
+        for (int y = 0; y < im.h; y++) {
+            for (int c = 0; c < im.c; c++) {
+                if (range != 0) {
+                    // scale the value
+                    float value = get_pixel(im, x, y, c);
+                    set_pixel(im, x, y, c, (value - min) / range);
+                } else {
+                    // if the range is 0, just set everything to 0
+                    set_pixel(im, x, y, c, 0);
+                }
+            }
+        }
+    }
 }
 
 image *sobel_image(image im)
 {
-    // TODO
-    return calloc(2, sizeof(image));
+    // 2.5.3 TODONE
+    // based on Redmon's suggestion
+    image gx_filter = make_gx_filter();
+    image gy_filter = make_gy_filter();
+    image gx = convolve_image(im, gx_filter, 0);
+    image gy = convolve_image(im, gy_filter, 0);
+    image *ret = calloc(2, sizeof(image));
+    image mag = make_image(im.w, im.h, 1);
+    image dir = make_image(im.w, im.h, 1);
+    ret[0] = mag;
+    ret[1] = dir;
+
+    // loop through gx and gy to populate mag and dir
+    for(int x = 0; x < im.w; x++) {
+        for(int y = 0; y < im.h; y++) {
+            float gx_pix = get_pixel(gx, x, y, 0);
+            float gy_pix = get_pixel(gy, x, y, 0);
+            float mag_pix = sqrtf((gx_pix * gx_pix) + (gy_pix * gy_pix));
+            float dir_pix = atan2(gy_pix, gx_pix);
+            set_pixel(mag, x, y, 0, mag_pix);
+            set_pixel(dir, x, y, 0, dir_pix);
+        }
+    }
+
+    return ret;
 }
 
 image colorize_sobel(image im)
 {
-    // TODO
-    return make_image(1,1,1);
+    // 2.5.4 TODONE
+    // make it so that as you go:
+    // l->r red increases
+    // top->bottom increases green
+    // blue incrases as average of red & green increases;
+    // these all are also porportional to the normalized
+    // direction from applying sobel to the provided image
+    image creative = make_image(im.w, im.h, 3);
+    image* sobel = sobel_image(im);
+    image dir = sobel[1];
+    feature_normalize(dir);
+    for(int x = 0; x < im.w; x++) {
+        for(int y = 0; y < im.h; y++) {
+            float sobel_pix = get_pixel(dir, x, y, 0);
+            float pix_r = sobel_pix * (1.0f + x) / im.w;
+            float pix_g = sobel_pix * (1.0f + y) / im.h;
+            float pix_b = (pix_g + pix_r / 2.0f);
+            set_pixel(creative, x, y, 0, pix_r);
+            set_pixel(creative, x, y, 1, pix_g);
+            set_pixel(creative, x, y, 2, pix_b);
+        }
+    }
+    return creative;
 }

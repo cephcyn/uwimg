@@ -39,4 +39,14 @@ hfreq_b = im_b - lfreq_b
 combined = lfreq_a + hfreq_b
 save_image(combined, "ronbledore")
 
+from uwimg import *
+im = load_image("data/dog.jpg")
+res = sobel_image(im)
+mag = res[0]
+feature_normalize(mag)
+save_image(mag, "magnitude")
 
+# creative poopoo
+im = load_image("data/dog.jpg")
+im = colorize_sobel(im)
+save_image(im, "creative_doggie")
