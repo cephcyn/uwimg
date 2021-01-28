@@ -139,10 +139,10 @@ image make_emboss_filter()
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
-// Answer: The filters we should use perserve for are the Sharpen and Emoss filter. This is because test.c uses perserver for these filters. We do not use perserve on highpass because test.c doesn't use perserve for it. Also, travis is a dumbass.
+// Answer: We want to use preserve for "Sharpen" and "Emboss" filters because those filters still produce RGB image output. We don't want to use preserve for the "Highpass" filter because since it's intended for edge detection, we would prefer grayscale output.
 
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
-// Answer: No, test.c doesn't do any post processing for any of these filters.
+// Answer: No, we don't need to do any post-processing for any of these filters. For sharpen and emboss, we already have the RGB output built-in to the filter with preserve enabled. For highpass, we want a grayscale output, but that's already handled by disabling preserve. 
 
 image make_gaussian_filter(float sigma)
 {
