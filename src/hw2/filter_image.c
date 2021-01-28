@@ -139,15 +139,33 @@ image make_emboss_filter()
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
-// Answer: We want to use preserve for "Sharpen" and "Emboss" filters because those filters still produce RGB image output. We don't want to use preserve for the "Highpass" filter because since it's intended for edge detection, we would prefer grayscale output.
+// Answer: We want to use preserve for "Box", "Sharpen", and "Emboss" filters because those filters still produce RGB image output. We don't want to use preserve for the "Highpass" filter because since it's intended for edge detection, we would prefer grayscale output.
 
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
-// Answer: No, we don't need to do any post-processing for any of these filters. For sharpen and emboss, we already have the RGB output built-in to the filter with preserve enabled. For highpass, we want a grayscale output, but that's already handled by disabling preserve. 
+// Answer: We need to normalize for "Sharpen", "Emboss", and "Highpass" filters since they're not normalized, so using them raw could end up giving us pixel values in different channels greater than 1 (e.g. if the pixel is white, it ends up extra-white!). With the same reasoning, we don't need to post-process "Box" filter since it's already normalized. For all of them, the preserve setting takes care of channel logic so we don't need to do any post-processing related to channels. 
 
 image make_gaussian_filter(float sigma)
 {
-    // TODO
-    return make_image(1,1,1);
+    // 2.3 TODONE
+    // Calculate the filter size we need... smallest odd int > 6*sigma
+    int size = (int) (2*ceilf((sigma*6 - 1)/2))+1;
+    image filter = make_image(size,size,1);
+    // set the raw weights
+    int center = (size-1)/2;
+    float factor = 1.0 / (2.0*M_PI*sigma*sigma);
+    for (int x = 0; x <= (size-1)/2; x++) {
+        for (int y = 0; y <= (size-1)/2; y++) {
+            float exp = expf(-1.0*(x*x + y*y)/(2.0*sigma*sigma));
+            float value = factor*exp;
+            set_pixel(filter, center+x, center+y, 0, value);
+            set_pixel(filter, center+x, center-y, 0, value);
+            set_pixel(filter, center-x, center+y, 0, value);
+            set_pixel(filter, center-x, center-y, 0, value);
+        }
+    }
+    // normalize the weights
+    l1_normalize(filter);
+    return filter;
 }
 
 image add_image(image a, image b)
