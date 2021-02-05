@@ -117,8 +117,12 @@ image find_and_draw_matches(image a, image b, float sigma, float thresh, int nms
 // returns: l1 distance between arrays (sum of absolute differences).
 float l1_distance(float *a, float *b, int n)
 {
-    // TODO: return the correct number.
-    return 0;
+    // 3.5 TODONE: return the correct number.
+    float sum = 0.0f;
+    for(int i =0; i < n; i++) {
+        sum += fabsf(a[i]-b[i]);
+    }
+    return sum;
 }
 
 // Finds best matches between descriptors of two images.
@@ -135,25 +139,71 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     *mn = an;
     match *m = calloc(an, sizeof(match));
     for(j = 0; j < an; ++j){
-        // TODO: for every descriptor in a, find best match in b.
+        // 3.6.1 TODONE: for every descriptor in a, find best match in b.
         // record ai as the index in *a and bi as the index in *b.
         int bind = 0; // <- find the best match
+        float best = -1.0f;
+        for(int i = 0; i < bn; i++) {
+            float dist = l1_distance(a[j].data, b[i].data, a[j].n);
+            if (best < 0.0f || best > dist) {
+                best = dist;
+                bind = i;
+            }
+        }
         m[j].ai = j;
         m[j].bi = bind; // <- should be index in b.
         m[j].p = a[j].p;
         m[j].q = b[bind].p;
-        m[j].distance = 0; // <- should be the smallest L1 distance!
+        m[j].distance = best; // <- should be the smallest L1 distance!
     }
-
     int count = 0;
     int *seen = calloc(bn, sizeof(int));
-    // TODO: we want matches to be injective (one-to-one).
+    int *to_remove = calloc(an, sizeof(int));
+    // 3.6.2 TODONE: we want matches to be injective (one-to-one).
     // Sort matches based on distance using match_compare and qsort.
     // Then throw out matches to the same element in b. Use seen to keep track.
     // Each point should only be a part of one match.
     // Some points will not be in a match.
     // In practice just bring good matches to front of list, set *mn.
+    qsort(m, an, sizeof(match), match_compare);
+    for (int i = 0; i < an; i++) {
+        int b_index = m[i].bi;
+        if(seen[b_index]) {
+            to_remove[i] = 1;
+        } else {
+            count++;
+            seen[b_index] = 1;
+        }
+    }
+    j = an-1;
+    for(int i = 0; i < an && i < j; i++) {
+        if(to_remove[i]) {
+            // find first from back match to remove
+            while(j >= i && to_remove[j]) {
+                j--;
+            }
+            match temp = m[i];
+            m[i] = m[j];
+            m[j] = temp;
+            // debug
+            int z = to_remove[i];
+            to_remove[i] = to_remove[j];
+            to_remove[j] = z;
+            j--;
+        }
+    }
+    // TODO: REMOVE LATER
+    // debug stuff
+    int expected = 0;
+    for(int i = 0; i < an; i++) {
+        if(to_remove[i]) {
+            expected = 1;
+        } else if (expected != to_remove[i]) {
+            printf("fuck***********************************************\n");
+        }
+    }
     *mn = count;
+    free(to_remove);
     free(seen);
     return m;
 }
@@ -165,10 +215,18 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
 point project_point(matrix H, point p)
 {
     matrix c = make_matrix(3, 1);
-    // TODO: project point p with homography H.
+    // 3.7.1 TODONE: project point p with homography H.
     // Remember that homogeneous coordinates are equivalent up to scalar.
     // Have to divide by.... something...
-    point q = make_point(0, 0);
+    // set c to the contents to p to start
+    c.data[0][0] = p.x;
+    c.data[1][0] = p.y;
+    c.data[2][0] = 1;
+    // project
+    c = matrix_mult_matrix(H, c);
+    // re-normalize to image coords
+    double w = c.data[2][0];
+    point q = make_point(c.data[0][0] / w, c.data[1][0] / w);
     return q;
 }
 
@@ -177,8 +235,12 @@ point project_point(matrix H, point p)
 // returns: L2 distance between them.
 float point_distance(point p, point q)
 {
-    // TODO: should be a quick one.
-    return 0;
+    // 3.7.2 TODONE: should be a quick one.
+    float x2 = p.x - q.x;
+    float y2 = p.y - p.y;
+    x2 = x2 * x2;
+    y2 = y2 * y2;
+    return sqrtf(x2 + y2);
 }
 
 // Count number of inliers in a set of matches. Should also bring inliers
@@ -194,7 +256,7 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 {
     int i;
     int count = 0;
-    // TODO: count number of matches that are inliers
+    // i3.7.3 TODO: count number of matches that are inliers
     // i.e. distance(H*p, q) < thresh
     // Also, sort the matches m so the inliers are the first 'count' elements.
     return count;
