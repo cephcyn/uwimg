@@ -256,9 +256,18 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 {
     int i;
     int count = 0;
-    // i3.7.3 TODO: count number of matches that are inliers
+    // 3.7.3 TODO: count number of matches that are inliers
     // i.e. distance(H*p, q) < thresh
     // Also, sort the matches m so the inliers are the first 'count' elements.
+    for (i = 0; i < n; i++) {
+        float dist = point_distance(project_point(H, m[i].p), m[i].q);
+        if (dist < thresh) {
+            match temp = m[count];
+            m[count] = m[i];
+            m[i] = temp;
+            count += 1;
+        }
+    }
     return count;
 }
 
@@ -267,7 +276,13 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 // int n: number of elements in matches.
 void randomize_matches(match *m, int n)
 {
-    // TODO: implement Fisher-Yates to shuffle the array.
+    // 3.8 TODONE: implement Fisher-Yates to shuffle the array.
+    for (int i = n-1; i > 0; i--) {
+        int j = rand() % (i+1);
+        match temp = m[j];
+        m[j] = m[i];
+        m[i] = temp;
+    }
 }
 
 // Computes homography between two images given matching pixels.
@@ -285,8 +300,25 @@ matrix compute_homography(match *matches, int n)
         double xp = matches[i].q.x;
         double y  = matches[i].p.y;
         double yp = matches[i].q.y;
-        // TODO: fill in the matrices M and b.
-
+        // 3.7.4 TODONE: fill in the matrices M and b.
+        M.data[2*i][0] = x;
+        M.data[2*i][1] = y;
+        M.data[2*i][2] = 1;
+        M.data[2*i][3] = 0;
+        M.data[2*i][4] = 0;
+        M.data[2*i][5] = 0;
+        M.data[2*i][6] = -1*x*xp;
+        M.data[2*i][7] = -1*y*xp;
+        M.data[2*i+1][0] = 0;
+        M.data[2*i+1][1] = 0;
+        M.data[2*i+1][2] = 0;
+        M.data[2*i+1][3] = x;
+        M.data[2*i+1][4] = y;
+        M.data[2*i+1][5] = 1;
+        M.data[2*i+1][6] = -1*x*yp;
+        M.data[2*i+1][7] = -1*y*yp;
+        b.data[2*i][0] = xp;
+        b.data[2*i+1][0] = yp;
     }
     matrix a = solve_system(M, b);
     free_matrix(M); free_matrix(b); 
@@ -296,8 +328,16 @@ matrix compute_homography(match *matches, int n)
     if(!a.data) return none;
 
     matrix H = make_matrix(3, 3);
-    // TODO: fill in the homography H based on the result in a.
-
+    // 3.7.4 TODONE: fill in the homography H based on the result in a.
+    H.data[0][0] = a.data[0][0];
+    H.data[0][1] = a.data[1][0];
+    H.data[0][2] = a.data[2][0];
+    H.data[1][0] = a.data[3][0];
+    H.data[1][1] = a.data[4][0];
+    H.data[1][2] = a.data[5][0];
+    H.data[2][0] = a.data[6][0];
+    H.data[2][1] = a.data[7][0];
+    H.data[2][2] = 1;
 
     free_matrix(a);
     return H;
@@ -315,7 +355,7 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     int e;
     int best = 0;
     matrix Hb = make_translation_homography(256, 0);
-    // TODO: fill in RANSAC algorithm.
+    // 3.9 TODO: fill in RANSAC algorithm.
     // for k iterations:
     //     shuffle the matches
     //     compute a homography with a few matches (how many??)
@@ -325,7 +365,23 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     //         if it's better than the cutoff:
     //             return it immediately
     // if we get to the end return the best homography
-    return Hb;
+    matrix bestmodel = NULL;
+    int bestfit = -1;
+    for (int iter = 0; iter < k; iter++) {
+        randomize_matches(m, n);
+        int t = (rand % n) + 1;
+        matrix homog = compute_homography(m, t);
+        int inliers = model_inliers(homog, m, n, thresh);
+        if (inliers > bestfit) {
+            bestfit = inliers;
+            bestmodel = copmute_homography(m, inliers);
+            if (inliers > cutoff) {
+                return bestmodel;
+            }
+        }
+
+    }
+    return bestmodel;
 }
 
 // Stitches two images together using a projective transformation.
@@ -370,6 +426,8 @@ image combine_images(image a, image b, matrix H)
         for(j = 0; j < a.h; ++j){
             for(i = 0; i < a.w; ++i){
                 // TODO: fill in.
+                float pixel = get_pixel(a, k, j, i);
+                set_pixel(c, k+dx, j+dy, i, pixel);
             }
         }
     }
@@ -379,6 +437,18 @@ image combine_images(image a, image b, matrix H)
     // and see if their projection from a coordinates to b coordinates falls
     // inside of the bounds of image b. If so, use bilinear interpolation to
     // estimate the value of b at that projection, then fill in image c.
+
+    // stitch together iamges with homography
+    int rand_w = rand() % a.c
+    for(k = 0; k < a.c; ++k){
+        for(j = 0; j < a.h; ++j){
+            for(i = 0; i < a.w; ++i){
+                // TODO: fill in.
+                float pixel = get_pixel(a, k, j, i);
+                set_pixel(c, k+dx, j+dy, i, pixel);
+            }
+        }
+    }
 
     return c;
 }
