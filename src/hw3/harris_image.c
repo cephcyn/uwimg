@@ -112,9 +112,33 @@ image smooth_image(image im, float sigma)
 //          third channel is IxIy.
 image structure_matrix(image im, float sigma)
 {
-    image S = make_image(im.w, im.h, 3);
-    // TODO: calculate structure matrix for im.
-    return S;
+    // image S = make_image(im.w, im.h, 3);
+    // 3.1 TODO: calculate structure matrix for im.
+    image gx_filter = make_gx_filter();
+    image gy_filter = make_gy_filter();
+    image ix = convolve_image(im, gx_filter, 0);
+    image iy = convolve_image(im, gy_filter, 0);
+    image res = make_image(im.w, im.h, 3);
+    // image iyiy = make_image(i.w, im.h, 1);
+    // image ixiy = make_image(i.w, im.h, 1);
+    for (int x = 0; x < im.w; x++) {
+         for (int y = 0; y < im.h; y++) {
+             float ix_pix = get_pixel(ix, x, y, 0);
+             float iy_pix = get_pixel(iy, x, y, 0);
+             set_pixel(res, x, y, 0, ix_pix * ix_pix);
+             set_pixel(res, x, y, 1, iy_pix * iy_pix);
+             set_pixel(res, x, y, 2, ix_pix * iy_pix);
+         }
+    }
+    image filter = make_gaussian_filter(sigma);
+    image result = convolve_image(res, filter, 1);
+    free_image(gx_filter);
+    free_image(gy_filter);
+    free_image(ix);
+    free_image(iy);
+    free_image(res);
+    free_image(filter);
+    return result;
 }
 
 // Estimate the cornerness of each pixel given a structure matrix S.
@@ -123,8 +147,19 @@ image structure_matrix(image im, float sigma)
 image cornerness_response(image S)
 {
     image R = make_image(S.w, S.h, 1);
-    // TODO: fill in R, "cornerness" for each pixel using the structure matrix.
+    // 3.2 TODO: fill in R, "cornerness" for each pixel using the structure matrix.
     // We'll use formulation det(S) - alpha * trace(S)^2, alpha = .06.
+    for (int x = 0; x < S.w; x++) {
+         for (int y = 0; y < S.h; y++) {
+             // the determinant of a 2x2 matrix is A11*A22-A12*A21
+             float det = (get_pixel(S, x, y, 0) * get_pixel(S, x, y, 1))
+                 - (get_pixel(S, x, y, 2) * get_pixel(S, x, y, 2));
+             float alpha = 0.06;
+             // the trace of a 2x2 matrix is A11+A22
+             float trace = get_pixel(S, x, y, 0) + get_pixel(S, x, y, 1);
+             set_pixel(R, x, y, 0, det - (alpha * trace * trace));
+         }
+    }
     return R;
 }
 
