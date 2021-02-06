@@ -143,7 +143,7 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
         // record ai as the index in *a and bi as the index in *b.
         int bind = 0; // <- find the best match
         float best = -1.0f;
-        for(int i = 0; i < bn; i++) {
+        for(i = 0; i < bn; i++) {
             float dist = l1_distance(a[j].data, b[i].data, a[j].n);
             if (best < 0.0f || best > dist) {
                 best = dist;
@@ -158,7 +158,6 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     }
     int count = 0;
     int *seen = calloc(bn, sizeof(int));
-    int *to_remove = calloc(an, sizeof(int));
     // 3.6.2 TODONE: we want matches to be injective (one-to-one).
     // Sort matches based on distance using match_compare and qsort.
     // Then throw out matches to the same element in b. Use seen to keep track.
@@ -169,41 +168,19 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     for (i = 0; i < an; i++) {
         int b_index = m[i].bi;
         if(seen[b_index]) {
-            to_remove[i] = 1;
+            // don't keep this match
         } else {
+            // keep this match - mark seen, and swap with element at pos count
+            seen[b_index] = 1;
+            match temp = m[count];
+            m[count] = m[i];
+            m[i] = temp;
             count++;
             seen[b_index] = 1;
         }
     }
-    j = an-1;
-    for(i = 0; i < an && i < j; i++) {
-        if(to_remove[i]) {
-            // find first from back match to remove
-            while(j >= i && to_remove[j]) {
-                j--;
-            }
-            match temp = m[i];
-            m[i] = m[j];
-            m[j] = temp;
-            // debug
-            int z = to_remove[i];
-            to_remove[i] = to_remove[j];
-            to_remove[j] = z;
-            j--;
-        }
-    }
-    // TODO: REMOVE LATER
-    // debug stuff
-    int expected = 0;
-    for(i = 0; i < an; i++) {
-        if(to_remove[i]) {
-            expected = 1;
-        } else if (expected != to_remove[i]) {
-            printf("fuck***********************************************\n");
-        }
-    }
+
     *mn = count;
-    free(to_remove);
     free(seen);
     return m;
 }
