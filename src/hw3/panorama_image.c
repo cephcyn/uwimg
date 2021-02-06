@@ -204,6 +204,7 @@ point project_point(matrix H, point p)
     // re-normalize to image coords
     double w = c.data[2][0];
     point q = make_point(c.data[0][0] / w, c.data[1][0] / w);
+    free_matrix(c);
     return q;
 }
 
@@ -344,19 +345,16 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     // if we get to the end return the best homography
     for (iter = 0; iter < k; iter++) {
         randomize_matches(m, n);
-        matrix homog = compute_homography(m, 4);
+        matrix homog = compute_homography(m, 4); // minimum to guarantee solvability
         int inliers = model_inliers(homog, m, n, thresh);
+        free_matrix(homog);
         if (inliers > best) {
             best = inliers;
-            Hb = compute_homography(m, inliers);
+            Hb = compute_homography(m, inliers); // note m was rearranged w/ inliers first
             if (inliers > cutoff) {
-                free_matrix(homog);
                 return Hb;
             }
-        } else {
-            free_matrix(homog);
         }
-
     }
     print_matrix(Hb); // TODO BLAH BLAH
     return Hb;
