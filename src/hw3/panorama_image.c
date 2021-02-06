@@ -69,9 +69,15 @@ image draw_matches(image a, image b, match *matches, int n, int inliers)
         int ey = matches[i].q.y;
         for(j = bx; j < ex + a.w; ++j){
             int r = (float)(j-bx)/(ex+a.w - bx)*(ey - by) + by;
-            set_pixel(both, j, r, 0, i<inliers?0:1);
-            set_pixel(both, j, r, 1, i<inliers?1:0);
-            set_pixel(both, j, r, 2, 0);
+            if (i<inliers) {
+                set_pixel(both, j, r, 0, 0);
+                set_pixel(both, j, r, 1, 1);
+                set_pixel(both, j, r, 2, 0);
+            } else {
+                //set_pixel(both, j, r, 0, 1);
+                //set_pixel(both, j, r, 1, 0);
+                //set_pixel(both, j, r, 2, 0);
+            }
         }
     }
     return both;
@@ -176,7 +182,6 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
             m[count] = m[i];
             m[i] = temp;
             count++;
-            seen[b_index] = 1;
         }
     }
 
@@ -239,7 +244,8 @@ int model_inliers(matrix H, match *m, int n, float thresh)
     // Also, sort the matches m so the inliers are the first 'count' elements.
     for (i = 0; i < n; i++) {
         float dist = point_distance(project_point(H, m[i].p), m[i].q);
-        if (dist < thresh) {
+        if (dist <= thresh) { // as a side note, should this be <= or < ?
+            // rearrange the matches so inliers come first
             match temp = m[count];
             m[count] = m[i];
             m[i] = temp;
@@ -343,19 +349,26 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     //         if it's better than the cutoff:
     //             return it immediately
     // if we get to the end return the best homography
+    int SAMPLESIZE = 4;
     for (iter = 0; iter < k; iter++) {
         randomize_matches(m, n);
-        matrix homog = compute_homography(m, 4); // minimum to guarantee solvability
-        int inliers = model_inliers(homog, m, n, thresh);
+        matrix homog = compute_homography(m, SAMPLESIZE); // minimum to guarantee solvability
+        int inliers = model_inliers(homog, m+SAMPLESIZE, n-SAMPLESIZE, thresh);
         free_matrix(homog);
         if (inliers > best) {
             best = inliers;
-            Hb = compute_homography(m, inliers); // note m was rearranged w/ inliers first
-            if (inliers > cutoff) {
+            // note that m was rearranged to contain inliers first!
+            Hb = compute_homography(m, SAMPLESIZE);
+            // NOTE - oddly enough, fitting to (m, inliers) actually HURTS the pano generation
+            //        contrary to what guidance we get from lecture slides. Why?????
+            if (0){//inliers > cutoff) {
+                printf("used the cutoff, reached %d inliers out of %d cutoff\n", inliers, cutoff);
+                print_matrix(Hb);
                 return Hb;
             }
         }
     }
+    printf("best found %d inliers\n", best);
     print_matrix(Hb); // TODO BLAH BLAH
     return Hb;
 }
@@ -414,11 +427,11 @@ image combine_images(image a, image b, matrix H)
     // inside of the bounds of image b. If so, use bilinear interpolation to
     // estimate the value of b at that projection, then fill in image c.
 
-    // loop over the B-region in output image
+    // loop over the B-region in terms of A coords
     for (k = 0; k < b.c; ++k) {
         for (j = topleft.y; j < botright.y; ++j) {
             for (i = topleft.x; i < botright.x; ++i) {
-                // convert C point to B coords
+                // convert A coord point to B coords
                 point source = make_point(i, j);
                 source = project_point(H, source);
                 // check if the source point is within B bounds
@@ -434,7 +447,7 @@ image combine_images(image a, image b, matrix H)
     return c;
 }
 
-// Create a panoramam between two images.
+// Create a panorama between two images.
 // image a, b: images to stitch together.
 // float sigma: gaussian for harris corner detector. Typical: 2
 // float thresh: threshold for corner/no corner. Typical: 1-5
@@ -459,10 +472,10 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);
 
-    if(0){
+    if(1){
         // Mark corners and matches between images
-        mark_corners(a, ad, an);
-        mark_corners(b, bd, bn);
+        //mark_corners(a, ad, an);
+        //mark_corners(b, bd, bn);
         image inlier_matches = draw_inliers(a, b, H, m, mn, inlier_thresh);
         save_image(inlier_matches, "inliers");
     }
