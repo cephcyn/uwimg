@@ -352,10 +352,10 @@ matrix compute_homography(match *matches, int n)
 // returns: matrix representing most common homography between matches.
 matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
 {
-    int e;
+    int iter;
     int best = 0;
     matrix Hb = make_translation_homography(256, 0);
-    // 3.9 TODO: fill in RANSAC algorithm.
+    // 3.9 TODONE: fill in RANSAC algorithm.
     // for k iterations:
     //     shuffle the matches
     //     compute a homography with a few matches (how many??)
@@ -365,23 +365,23 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     //         if it's better than the cutoff:
     //             return it immediately
     // if we get to the end return the best homography
-    matrix bestmodel = NULL;
-    int bestfit = -1;
-    for (int iter = 0; iter < k; iter++) {
+    for (iter = 0; iter < k; iter++) {
         randomize_matches(m, n);
-        int t = (rand % n) + 1;
-        matrix homog = compute_homography(m, t);
+        matrix homog = compute_homography(m, 4);
         int inliers = model_inliers(homog, m, n, thresh);
-        if (inliers > bestfit) {
-            bestfit = inliers;
-            bestmodel = copmute_homography(m, inliers);
+        if (inliers > best) {
+            best = inliers;
+            Hb = compute_homography(m, inliers);
             if (inliers > cutoff) {
-                return bestmodel;
+                free_matrix(homog);
+                return Hb;
             }
+        } else {
+            free_matrix(homog);
         }
 
     }
-    return bestmodel;
+    return Hb;
 }
 
 // Stitches two images together using a projective transformation.
@@ -425,25 +425,25 @@ image combine_images(image a, image b, matrix H)
     for(k = 0; k < a.c; ++k){
         for(j = 0; j < a.h; ++j){
             for(i = 0; i < a.w; ++i){
-                // TODO: fill in.
+                // 3.10 TODO: fill in.
                 float pixel = get_pixel(a, k, j, i);
                 set_pixel(c, k+dx, j+dy, i, pixel);
             }
         }
     }
 
-    // TODO: Paste in image b as well.
+    // 3.10 TODO: Paste in image b as well.
     // You should loop over some points in the new image (which? all?)
     // and see if their projection from a coordinates to b coordinates falls
     // inside of the bounds of image b. If so, use bilinear interpolation to
     // estimate the value of b at that projection, then fill in image c.
 
     // stitch together iamges with homography
-    int rand_w = rand() % a.c
+    int rand_w = rand() % a.c;
     for(k = 0; k < a.c; ++k){
         for(j = 0; j < a.h; ++j){
             for(i = 0; i < a.w; ++i){
-                // TODO: fill in.
+                // 3.10 TODO: fill in.
                 float pixel = get_pixel(a, k, j, i);
                 set_pixel(c, k+dx, j+dy, i, pixel);
             }
