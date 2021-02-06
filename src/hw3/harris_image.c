@@ -119,8 +119,6 @@ image structure_matrix(image im, float sigma)
     image ix = convolve_image(im, gx_filter, 0);
     image iy = convolve_image(im, gy_filter, 0);
     image res = make_image(im.w, im.h, 3);
-    // image iyiy = make_image(i.w, im.h, 1);
-    // image ixiy = make_image(i.w, im.h, 1);
     for (int x = 0; x < im.w; x++) {
          for (int y = 0; y < im.h; y++) {
              float ix_pix = get_pixel(ix, x, y, 0);
@@ -130,14 +128,12 @@ image structure_matrix(image im, float sigma)
              set_pixel(res, x, y, 2, ix_pix * iy_pix);
          }
     }
-    image filter = make_gaussian_filter(sigma);
-    image result = convolve_image(res, filter, 1);
+    image result = smooth_image(res, sigma);
     free_image(gx_filter);
     free_image(gy_filter);
     free_image(ix);
     free_image(iy);
     free_image(res);
-    free_image(filter);
     return result;
 }
 
