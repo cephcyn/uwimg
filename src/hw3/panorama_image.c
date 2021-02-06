@@ -166,7 +166,7 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     // Some points will not be in a match.
     // In practice just bring good matches to front of list, set *mn.
     qsort(m, an, sizeof(match), match_compare);
-    for (int i = 0; i < an; i++) {
+    for (i = 0; i < an; i++) {
         int b_index = m[i].bi;
         if(seen[b_index]) {
             to_remove[i] = 1;
@@ -176,7 +176,7 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
         }
     }
     j = an-1;
-    for(int i = 0; i < an && i < j; i++) {
+    for(i = 0; i < an && i < j; i++) {
         if(to_remove[i]) {
             // find first from back match to remove
             while(j >= i && to_remove[j]) {
@@ -195,7 +195,7 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     // TODO: REMOVE LATER
     // debug stuff
     int expected = 0;
-    for(int i = 0; i < an; i++) {
+    for(i = 0; i < an; i++) {
         if(to_remove[i]) {
             expected = 1;
         } else if (expected != to_remove[i]) {
@@ -256,7 +256,7 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 {
     int i;
     int count = 0;
-    // 3.7.3 TODO: count number of matches that are inliers
+    // 3.7.3 TODONE: count number of matches that are inliers
     // i.e. distance(H*p, q) < thresh
     // Also, sort the matches m so the inliers are the first 'count' elements.
     for (i = 0; i < n; i++) {
@@ -381,6 +381,7 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
         }
 
     }
+    print_matrix(Hb); // TODO BLAH BLAH
     return Hb;
 }
 
@@ -425,27 +426,32 @@ image combine_images(image a, image b, matrix H)
     for(k = 0; k < a.c; ++k){
         for(j = 0; j < a.h; ++j){
             for(i = 0; i < a.w; ++i){
-                // 3.10 TODO: fill in.
-                float pixel = get_pixel(a, k, j, i);
-                set_pixel(c, k+dx, j+dy, i, pixel);
+                // 3.10 TODONE: fill in.
+                float pixel = get_pixel(a, i, j, k);
+                set_pixel(c, i-dx, j-dy, k, pixel);
             }
         }
     }
 
-    // 3.10 TODO: Paste in image b as well.
+    // 3.10 TODONE: Paste in image b as well.
     // You should loop over some points in the new image (which? all?)
     // and see if their projection from a coordinates to b coordinates falls
     // inside of the bounds of image b. If so, use bilinear interpolation to
     // estimate the value of b at that projection, then fill in image c.
 
-    // stitch together iamges with homography
-    int rand_w = rand() % a.c;
-    for(k = 0; k < a.c; ++k){
-        for(j = 0; j < a.h; ++j){
-            for(i = 0; i < a.w; ++i){
-                // 3.10 TODO: fill in.
-                float pixel = get_pixel(a, k, j, i);
-                set_pixel(c, k+dx, j+dy, i, pixel);
+    // loop over the B-region in output image
+    for (k = 0; k < b.c; ++k) {
+        for (j = topleft.y; j < botright.y; ++j) {
+            for (i = topleft.x; i < botright.x; ++i) {
+                // convert C point to B coords
+                point source = make_point(i, j);
+                source = project_point(H, source);
+                // check if the source point is within B bounds
+                if (source.x >= 0 && source.x < b.w && source.y >= 0 && source.y < b.h) {
+                    // do bilinear intepolation to get B value
+                    float pixel = bilinear_interpolate(b, source.x, source.y, k);
+                    set_pixel(c, i-dx, j-dy, k, pixel);
+                }
             }
         }
     }
@@ -478,7 +484,7 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);
 
-    if(1){
+    if(0){
         // Mark corners and matches between images
         mark_corners(a, ad, an);
         mark_corners(b, bd, bn);
