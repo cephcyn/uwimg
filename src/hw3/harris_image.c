@@ -83,8 +83,20 @@ void mark_corners(image im, descriptor *d, int n)
 // returns: single row image of the filter.
 image make_1d_gaussian(float sigma)
 {
-    // TODO: optional, make separable 1d Gaussian.
-    return make_image(1,1,1);
+    // TODONE: optional, make separable 1d Gaussian.
+    int size = (int) (2*ceilf((sigma*6 - 1)/2))+1;
+    image filter = make_image(size,1,1);
+    int center = (size-1)/2;
+    float factor = 1.0 / sqrtf(2.0*M_PI*sigma*sigma);
+    for (int x = 0; x <= (size-1)/2; x++) {
+        float exp = expf(-1.0*(x*x)/(2.0*sigma*sigma));
+        float value = factor*exp;
+        set_pixel(filter, center+x, 0, 0, value);
+        set_pixel(filter, center-x, 0, 0, value);
+    }
+    // normalize the weights
+    l1_normalize(filter);
+    return filter;
 }
 
 // Smooths an image using separable Gaussian filter.
@@ -93,15 +105,42 @@ image make_1d_gaussian(float sigma)
 // returns: smoothed image.
 image smooth_image(image im, float sigma)
 {
-    if(1){
+    if(0){
         image g = make_gaussian_filter(sigma);
         image s = convolve_image(im, g, 1);
         free_image(g);
         return s;
     } else {
-        // TODO: optional, use two convolutions with 1d gaussian filter.
+        // TODONE: optional, use two convolutions with 1d gaussian filter.
         // If you implement, disable the above if check.
-        return copy_image(im);
+        image xfilter = make_1d_gaussian(sigma);
+        image yfilter = make_image(1, xfilter.w, 1);
+        for (int x = 0; x < xfilter.w; x++) {
+            set_pixel(yfilter, 0, x, 0, get_pixel(xfilter, x, 0, 0));
+        }
+        image xi = convolve_image(im, xfilter, 1);
+        image xyi = convolve_image(xi, yfilter, 1);
+        // TODO: Remove Debug
+        /* image g = make_gaussian_filter(sigma);
+        image s = convolve_image(im, g, 1);
+        if (xyi.w != s.w || xyi.h != s.h || xyi.c != s.c) {
+            printf("fucccccccck************************************");
+        }
+        for (int x = 0; x < xyi.w; x++) {
+            for (int y = 0; y < xyi.h; y++) {
+                for (int c = 0; c < xyi.c; c++) {
+                    float pix1 = get_pixel(xyi, x, y, c);
+                    float pix2 = get_pixel(s, x, y, c);
+                    if(pix1 != pix2) {
+                        //printf("MISMATCH PIXEL ***********************");
+                    }
+                }
+            }
+        } */
+        free_image(xfilter);
+        free_image(yfilter);
+        free_image(xi);
+        return xyi;
     }
 }
 
