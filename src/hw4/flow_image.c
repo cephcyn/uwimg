@@ -78,7 +78,7 @@ image box_filter_image(image im, int s)
     int i,j,k;
     image integ = make_integral_image(im);
     image S = make_image(im.w, im.h, im.c);
-    // 4.2 TODO: fill in S using the integral image.
+    // 4.2 TODONE: fill in S using the integral image.
     for (int c = 0; c < im.c; c++) {
         for (int x = 0; x < im.w; x++) {
             for (int y = 0; y < im.h; y++) {
@@ -117,14 +117,6 @@ image box_filter_image(image im, int s)
                     pix2 = 0;
                     pix4 = 0;
                 }
-                //width = s;
-                //height = s;
-                if (x == 0 && y == 0 && c == 0) {
-                    //x1 = x + half;
-                    //y1 = y + half;
-                    //pix1 = get_pixel(integ, x1, y1, c);
-                    printf("%f, %f, %f, %f, %d, %d, %d\n", pix1, pix2, pix3, pix4, half, width, height);
-                }
                 set_pixel(S, x, y, c, ((pix1 - pix2) - (pix3 - pix4)) / (width * height));
             }
         }
@@ -148,14 +140,40 @@ image time_structure_matrix(image im, image prev, int s)
         prev = rgb_to_grayscale(prev);
     }
 
-    // TODO: calculate gradients, structure components, and smooth them
-
-    image S;
+    // 4.3 TODO: calculate gradients, structure components, and smooth them
+    image res = make_image(im.w, im.h, 5);
+    image gx_filter = make_gx_filter();
+    image gy_filter = make_gy_filter();
+    image ix = convolve_image(im, gx_filter, 0);
+    image iy = convolve_image(im, gy_filter, 0);
+    for (int x = 0; x < im.w; x++) {
+         for (int y = 0; y < im.h; y++) {
+             float ix_pix = get_pixel(ix, x, y, 0);
+             float iy_pix = get_pixel(iy, x, y, 0);
+             set_pixel(res, x, y, 0, ix_pix * ix_pix);
+             set_pixel(res, x, y, 1, iy_pix * iy_pix);
+             set_pixel(res, x, y, 2, ix_pix * iy_pix);
+         }
+    }
+    for (int c = 0; c < 1; c++) {
+        for (int x = 0; x < im.w; x++) {
+            for (int y = 0; y < im.h; y++) {
+                float pixel = get_pixel(im, x, y , c);
+                float prev_pixel = get_pixel(prev, x, y , c);
+                float it_pix = pixel - prev_pixel;
+                float ix_pix = get_pixel(ix, x, y, 0);
+                float iy_pix = get_pixel(iy, x, y, 0);
+                set_pixel(res, x, y, 3, ix_pix * it_pix);
+                set_pixel(res, x, y, 4, iy_pix * it_pix);
+            }
+        }
+    }
+    res = box_filter_image(res, s);
 
     if(converted){
         free_image(im); free_image(prev);
     }
-    return S;
+    return res;
 }
 
 // Calculate the velocity given a structure image
@@ -166,6 +184,7 @@ image velocity_image(image S, int stride)
     image v = make_image(S.w/stride, S.h/stride, 3);
     int i, j;
     matrix M = make_matrix(2,2);
+    matrix T = make_matrix(2,1);
     for(j = (stride-1)/2; j < S.h; j += stride){
         for(i = (stride-1)/2; i < S.w; i += stride){
             float Ixx = S.data[i + S.w*j + 0*S.w*S.h];
@@ -175,14 +194,26 @@ image velocity_image(image S, int stride)
             float Iyt = S.data[i + S.w*j + 4*S.w*S.h];
 
             // TODO: calculate vx and vy using the flow equation
-            float vx = 0;
-            float vy = 0;
+            M.data[0][0] = Ixx;
+            M.data[0][1] = Ixy;
+            M.data[1][0] = Ixy;
+            M.data[1][1] = Iyy;
+
+            T.data[0][0] = -Ixt;
+            T.data[0][1] = -Iyt;
+            matrix M1 = matrix_invert(M);
+            matrix V = matrix_mult_matrix(M1, T);
+            float vx = V.data[0][0];
+            float vy = V.data[0][1];
 
             set_pixel(v, i/stride, j/stride, 0, vx);
             set_pixel(v, i/stride, j/stride, 1, vy);
+            free_matrix(M1);
+            free_matrix(V);
         }
     }
     free_matrix(M);
+    free_matrix(T);
     return v;
 }
 
