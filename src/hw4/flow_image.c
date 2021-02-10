@@ -78,7 +78,57 @@ image box_filter_image(image im, int s)
     int i,j,k;
     image integ = make_integral_image(im);
     image S = make_image(im.w, im.h, im.c);
-    // TODO: fill in S using the integral image.
+    // 4.2 TODO: fill in S using the integral image.
+    for (int c = 0; c < im.c; c++) {
+        for (int x = 0; x < im.w; x++) {
+            for (int y = 0; y < im.h; y++) {
+                int half = s / 2;
+                int x1 = x + half;
+                int x2 = x - (half + 1);
+                int y1 = y + half;
+                int y2 = y - (half + 1);
+                float pix1 = get_pixel(integ, x1, y1, c);
+                float pix2 = get_pixel(integ, x1, y2, c);
+                float pix3 = get_pixel(integ, x2, y1, c);
+                float pix4 = get_pixel(integ, x2, y2, c);
+                int width = s;
+                int height = s;
+                if ( x1 > im.w ) {
+                    width -= x1 - (im.w - 1);
+                    x1 = im.w - 1;
+                    pix1 = get_pixel(integ, x1, y1, c);
+                    pix2 = get_pixel(integ, x1, y2, c);
+                }
+                if (x2 < 0) {
+                    width += (x2 + 1);
+                    x2 = 0;
+                    pix3 = 0;
+                    pix4 = 0;
+                }
+                if (y1 > im.h) {
+                    height -= x1 - (im.w - 1);
+                    y1 = im.h - 1;
+                    pix1 = get_pixel(integ, x1, y1, c);
+                    pix3 = get_pixel(integ, x2, y1, c);
+                }
+                if (y2 < 0) {
+                    height += (y2 + 1);
+                    y2 = 0;
+                    pix2 = 0;
+                    pix4 = 0;
+                }
+                //width = s;
+                //height = s;
+                if (x == 0 && y == 0 && c == 0) {
+                    //x1 = x + half;
+                    //y1 = y + half;
+                    //pix1 = get_pixel(integ, x1, y1, c);
+                    printf("%f, %f, %f, %f, %d, %d, %d\n", pix1, pix2, pix3, pix4, half, width, height);
+                }
+                set_pixel(S, x, y, c, ((pix1 - pix2) - (pix3 - pix4)) / (width * height));
+            }
+        }
+    }
     return S;
 }
 
