@@ -47,7 +47,25 @@ void draw_line(image im, float x, float y, float dx, float dy)
 image make_integral_image(image im)
 {
     image integ = make_image(im.w, im.h, im.c);
-    // TODO: fill in the integral image
+    // 4.1 TODONE: fill in the integral image
+    for (int c = 0; c < im.c; c++) {
+        for (int x = 0; x < im.w; x++) {
+            for (int y = 0; y < im.h; y++) {
+                float pix1 = get_pixel(im, x, y, c);
+                float pix2 = get_pixel(integ, x-1, y, c);
+                float pix3 = get_pixel(integ, x, y-1, c);
+                float pix4 = get_pixel(integ, x-1, y-1, c);
+                if (x-1 < 0) {
+                  pix2 = 0;
+                }
+                if (y-1 < 0) {
+                  pix3 = 0;
+                  pix4 = 0;
+                }
+                set_pixel(integ, x, y, c, pix1 + pix2 + pix3 - pix4);
+            }
+        }
+    }
     return integ;
 }
 
