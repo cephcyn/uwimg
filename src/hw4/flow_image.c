@@ -201,15 +201,18 @@ image velocity_image(image S, int stride)
 
             T.data[0][0] = -Ixt;
             T.data[0][1] = -Iyt;
+            float vx = 0.0f;
+            float vy = 0.0f;
             matrix M1 = matrix_invert(M);
-            matrix V = matrix_mult_matrix(M1, T);
-            float vx = V.data[0][0];
-            float vy = V.data[0][1];
-
+            if (M1.rows == 2 && M1.cols == 2) {
+                matrix V = matrix_mult_matrix(M1, T);
+                vx = V.data[0][0];
+                vy = V.data[0][1];
+                free_matrix(V);
+            }
             set_pixel(v, i/stride, j/stride, 0, vx);
             set_pixel(v, i/stride, j/stride, 1, vy);
             free_matrix(M1);
-            free_matrix(V);
         }
     }
     free_matrix(M);
