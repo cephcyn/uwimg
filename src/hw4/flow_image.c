@@ -147,14 +147,21 @@ image time_structure_matrix(image im, image prev, int s)
     image ix = convolve_image(im, gx_filter, 0);
     image iy = convolve_image(im, gy_filter, 0);
     for (int x = 0; x < im.w; x++) {
-         for (int y = 0; y < im.h; y++) {
-             float ix_pix = get_pixel(ix, x, y, 0);
-             float iy_pix = get_pixel(iy, x, y, 0);
-             set_pixel(res, x, y, 0, ix_pix * ix_pix);
-             set_pixel(res, x, y, 1, iy_pix * iy_pix);
-             set_pixel(res, x, y, 2, ix_pix * iy_pix);
-         }
+        for (int y = 0; y < im.h; y++) {
+            float ix_pix = get_pixel(ix, x, y, 0);
+            float iy_pix = get_pixel(iy, x, y, 0);
+            set_pixel(res, x, y, 0, ix_pix * ix_pix);
+            set_pixel(res, x, y, 1, iy_pix * iy_pix);
+            set_pixel(res, x, y, 2, ix_pix * iy_pix);
+
+            float pixel = get_pixel(im, x, y , 0);
+            float prev_pixel = get_pixel(prev, x, y , 0);
+            float it_pix = pixel - prev_pixel;
+            set_pixel(res, x, y, 3, ix_pix * it_pix);
+            set_pixel(res, x, y, 4, iy_pix * it_pix);
+        }
     }
+    /*
     for (int c = 0; c < 1; c++) {
         for (int x = 0; x < im.w; x++) {
             for (int y = 0; y < im.h; y++) {
@@ -167,7 +174,7 @@ image time_structure_matrix(image im, image prev, int s)
                 set_pixel(res, x, y, 4, iy_pix * it_pix);
             }
         }
-    }
+    } */
     res = box_filter_image(res, s);
 
     if(converted){
@@ -200,14 +207,14 @@ image velocity_image(image S, int stride)
             M.data[1][1] = Iyy;
 
             T.data[0][0] = -Ixt;
-            T.data[0][1] = -Iyt;
+            T.data[1][0] = -Iyt;
             float vx = 0.0f;
             float vy = 0.0f;
             matrix M1 = matrix_invert(M);
             if (M1.rows == 2 && M1.cols == 2) {
                 matrix V = matrix_mult_matrix(M1, T);
                 vx = V.data[0][0];
-                vy = V.data[0][1];
+                vy = V.data[1][0];
                 free_matrix(V);
             }
             set_pixel(v, i/stride, j/stride, 0, vx);
