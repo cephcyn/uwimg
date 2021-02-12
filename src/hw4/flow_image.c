@@ -140,12 +140,13 @@ image time_structure_matrix(image im, image prev, int s)
         prev = rgb_to_grayscale(prev);
     }
 
-    // 4.3 TODO: calculate gradients, structure components, and smooth them
+    // 4.3.1 TODONE: calculate gradients, structure components, and smooth them
     image res = make_image(im.w, im.h, 5);
     image gx_filter = make_gx_filter();
     image gy_filter = make_gy_filter();
     image ix = convolve_image(im, gx_filter, 0);
     image iy = convolve_image(im, gy_filter, 0);
+
     for (int x = 0; x < im.w; x++) {
         for (int y = 0; y < im.h; y++) {
             float ix_pix = get_pixel(ix, x, y, 0);
@@ -161,20 +162,7 @@ image time_structure_matrix(image im, image prev, int s)
             set_pixel(res, x, y, 4, iy_pix * it_pix);
         }
     }
-    /*
-    for (int c = 0; c < 1; c++) {
-        for (int x = 0; x < im.w; x++) {
-            for (int y = 0; y < im.h; y++) {
-                float pixel = get_pixel(im, x, y , c);
-                float prev_pixel = get_pixel(prev, x, y , c);
-                float it_pix = pixel - prev_pixel;
-                float ix_pix = get_pixel(ix, x, y, 0);
-                float iy_pix = get_pixel(iy, x, y, 0);
-                set_pixel(res, x, y, 3, ix_pix * it_pix);
-                set_pixel(res, x, y, 4, iy_pix * it_pix);
-            }
-        }
-    } */
+
     res = box_filter_image(res, s);
 
     if(converted){
@@ -200,7 +188,7 @@ image velocity_image(image S, int stride)
             float Ixt = S.data[i + S.w*j + 3*S.w*S.h];
             float Iyt = S.data[i + S.w*j + 4*S.w*S.h];
 
-            // TODO: calculate vx and vy using the flow equation
+            // 4.3.2 TODONE: calculate vx and vy using the flow equation
             M.data[0][0] = Ixx;
             M.data[0][1] = Ixy;
             M.data[1][0] = Ixy;
