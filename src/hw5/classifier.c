@@ -327,29 +327,84 @@ void train_model(model m, data d, int batch, int iters, double rate, double mome
 // Questions 
 //
 // 5.2.2.1 Why might we be interested in both training accuracy and testing accuracy? What do these two numbers tell us about our current model?
-// TODO
-//
+// TODONE
+// Training accuracy tells us how well our model is doing on the training dataset.
+// Testing accuracy tells us how accurate our model is when run on datasets other than the ones in the training dataset.
+// Testing accuracy is important since it tells us how well our model generalizes, on data it has never seen before.
+// Training accuracy is important for training our model, we want to maximize this accuracy while training.
+
 // 5.2.2.2 Try varying the model parameter for learning rate to different powers of 10 (i.e. 10^1, 10^0, 10^-1, 10^-2, 10^-3) and training the model. What patterns do you see and how does the choice of learning rate affect both the loss during training and the final model accuracy?
-// TODO
-//
+// TODONE
+// as we increased the learning rate, we briefly increased in final accuracy before going down in final accuracy. as the learning rate was lowered, we only had a decrease in accuracy.
+// as the accuracy increased, our loss decreased. The only exception being a learning rate of 10 which had a loss of -nan.
+// Our numbers for varying learning rates are below
+
+// rate | training | testing  | loss
+// 10:     .0987       .098      -nan
+// 1:      .8929       .8889     0.75 ish 
+// .1:     .9179       .916      0.3  ish
+// .01:    .902        .907      0.4  ish
+// .001:   .8586       .869      0.6  ish 
+// .0001:  .7262       .7355     1.5  ish
+// .00001: .1710       .1678     2.2  ish
+
 // 5.2.2.3 Try varying the parameter for weight decay to different powers of 10: (10^0, 10^-1, 10^-2, 10^-3, 10^-4, 10^-5). How does weight decay affect the final model training and test accuracy?
-// TODO
-//
+// TODONE
+// The higher the decay, the less accurate model. However, once the decay is low enough, making it smaller seems to have little to no effect on accuracy.
+
+// decay | training | testing
+// 1:      .896        .904
+// .1:     .901        .907  
+// .01:    .902        .907     
+// .001:   .902        .907  
+// .0001:  .902        .907  
+// .00001: .902        .907
+
 // 5.2.3.1 Currently the model uses a logistic activation for the first layer. Try using a the different activation functions we programmed. How well do they perform? What's best?
-// TODO
-//
+// TODONE
+// We tried LOGISTIC, RELU, LRELU, and SOFT_MAX. From worst to best, it went SOFT_MAX, LOGISTIC, LRELU and then RELU. with about a .8 gap between LOGISTIC and SOFT_MAX and much smaller gaps elsewhere.
+// Our data is shown below:
+
+// activation | training | testing
+// LOGISTIC:     .8874       .8932
+// RELU:         .9228       .9238
+// LRELU:        .9206       .9217     
+// SOFT_MAX:     .0987       .098  
+
 // 5.2.3.2 Using the same activation, find the best (power of 10) learning rate for your model. What is the training accuracy and testing accuracy?
-// TODO
-//
+// the best learning rate was .1 and had training accuracy .9600, and testing accuracy .9542. Data is shown below.
+
+// rate | training | testing  
+// 10:     .0987       .098   
+// 1:      .0987       .098
+// .1:     .9611       .9564   
+// .01:    .9228       .9238   
+// .001:   .8643       .8681   
+// .0001:  .5924       .5915 
+// .00001: .1899       .1935 
+
 // 5.2.3.3 Right now the regularization parameter `decay` is set to 0. Try adding some decay to your model. What happens, does it help? Why or why not may this be?
-// TODO
-//
+// TODONE
+// adding decay (set to .01) lead to a slight decrease in both training (-.0011) and testing (-.0012) accuracy. This did not help, and likely happend due to the fact that the
+// model was already very accurate, and increasing decay made it lose some of the progress it had made.
+
 // 5.2.3.4 Modify your model so it has 3 layers instead of two. The layers should be `inputs -> 64`, `64 -> 32`, and `32 -> outputs`. Also modify your model to train for 3000 iterations instead of 1000. Look at the training and testing error for different values of decay (powers of 10, 10^-4 -> 10^0). Which is best? Why?
-// TODO
-//
+// TODONE
+// the smallest decay actually performed the best. It is really close though. As the decay increases, the training accuracy goes down, but the testing accuracy fluctuates a bit.
+// The fluctuation in testing accuracy may have some relation to how the model may be overfitting to the training data, which can lower testing accuracty.
+
+// decay | training | testing
+// 1:      .9465       .9433
+// .1:     .97785      .9725  
+// .01:    .9822       .9706     
+// .001:   .9832       .9712  
+// .0001:  .9866       .9734  
+
 // 5.3.2.1 How well does your network perform on the CIFAR dataset?
-// TODO
-//
+// TODONE
+// Cifar is a lot harder than mnist. It takes longer to train, and got a training accuracy of 0.4963 and a testing accuracy of 0.4742.
+// We ran this with a 3 layer neural net as described in 5.2.3.4 with the first two layers being RELu.
+// We set the learning rate to .01, iters to 5000, momentum to .9 and decay to .1
 
 
 
