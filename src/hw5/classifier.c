@@ -89,10 +89,15 @@ matrix forward_layer(layer *l, matrix in)
 {
 
     l->in = in;  // Save the input for backpropagation
-
+    
 
     // TODO: fix this! multiply input by weights and apply activation function.
-    matrix out = make_matrix(in.rows, l->w.cols);
+    //matrix out = make_matrix(in.rows, l->w.cols);
+    ACTIVATION a = l->activation;
+    matrix w = l->w;
+    matrix out = matrix_mult_matrix(in, w);
+    activate_matrix(out, a);
+
 
 
     free_matrix(l->out);// free the old output
@@ -109,12 +114,15 @@ matrix backward_layer(layer *l, matrix delta)
     // 1.4.1
     // delta is dL/dy
     // TODO: modify it in place to be dL/d(xw)
+    gradient_matrix(l->out, l->activation, delta);
 
 
     // 1.4.2
     // TODO: then calculate dL/dw and save it in l->dw
     free_matrix(l->dw);
-    matrix dw = make_matrix(l->w.rows, l->w.cols); // replace this
+    matrix xt = transpose_matrix(l->in);
+    matrix dw = matrix_mult_matrix(xt, delta); // replace this
+
     l->dw = dw;
 
     
@@ -123,6 +131,26 @@ matrix backward_layer(layer *l, matrix delta)
     matrix dx = make_matrix(l->in.rows, l->in.cols); // replace this
 
     return dx;
+}
+
+static matrix matrix_mult_scalar(matrix in, double scalar) {
+    matrix res = copy_matrix(in);
+    for (int i = 0; i < in.rows; i++) {
+      for (int j = 0; j < in.cols; j++) {
+        res.data[i][j] *= scalar;
+      }
+    }
+    return res;
+}
+
+static matrix matrix_add_matrix(matrix a, matrix b) {
+    matrix res = copy_matrix(a);
+    for (int i = 0; i < a.rows; i++) {
+      for (int j = 0; j < a.cols; j++) {
+        res.data[i][j] += b.data[i][j];
+      }
+    }
+    return res;
 }
 
 // Update the weights at layer l
@@ -134,10 +162,27 @@ void update_layer(layer *l, double rate, double momentum, double decay)
 {
     // TODO:
     // Calculate Δw_t = dL/dw_t - λw_t + mΔw_{t-1}
+    //                  l->dw - decay*l->w   + momentum * l->v
+    matrix decmat = matrix_mult_scalar(l->w, -1.0 * decay);
+    matrix moment = matrix_mult_scalar(l->v, momentum);
+    matrix temp = matrix_add_matrix(l->dw, decmat);
+    matrix delta_w = matrix_add_matrix(temp, moment);
+    free_matrix(temp);
+    free_matrix(moment);
+    free_matrix(decmat);
+
     // save it to l->v
+    free_matrix(l->v);
+    l->v = delta_w;
 
 
     // Update l->w
+    // l->w = l->w + rate * l->v
+    temp = matrix_mult_scalar(l->v, rate);
+    matrix temp2 = matrix_add_matrix(l->w, temp);
+    free_matrix(l->w);
+    free_matrix(temp);
+    l->w = temp2;
 
 
     // Remember to free any intermediate results to avoid memory leaks
